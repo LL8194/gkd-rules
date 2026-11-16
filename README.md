@@ -17,7 +17,7 @@ https://raw.gitmirror.com/LL8194/gkd-rules/main/gkd.json5
 https://cdn.jsdelivr.net/gh/LL8194/gkd-rules@main/gkd.json5
 ```
 
-## 两条规则分别干什么
+## 三条规则分别干什么
 
 ### ① 系统界面 `com.android.systemui` — 设备管理员安装提示-自动清除
 
@@ -37,6 +37,14 @@ https://cdn.jsdelivr.net/gh/LL8194/gkd-rules@main/gkd.json5
 
 匹配做了双重保险：必须同时出现「继续安装」按钮 **和** 「正在通过USB安装此应用」提示语，
 并限定弹窗出现后 8 秒窗口内尝试，避免在别的界面误点同文案按钮。
+
+### ③ 钉钉 `com.alibaba.android.rimet` — 开屏广告
+
+开屏广告是第三方品牌投放的大图（右下/右上角带「跳过(3)」倒计时）。这条在 App 启动后
+20 秒窗口内，命中「跳过」开头的短文本就点掉，`actionMaximum: 1` 保证每个生命周期只动一次，
+不会在聊天页误点同文案元素。
+
+未实测。若某版本钉钉的跳过按钮是纯图标没有文本，这条匹配不到，需要换成 `[vid="..."]` 之类。
 
 **⚠️ 代价**：这条等于自动同意「通过 USB 安装应用」，任何经该通道推来的安装请求都会放行，
 不再有人工确认。只要还想人工看一眼，就在 GKD 里把这一组单独关掉。
