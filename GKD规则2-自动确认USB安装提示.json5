@@ -1,0 +1,36 @@
+// GKD 本地订阅 · 应用规则 ②：安全中心
+// 作用：自动点掉「USB安装提示」弹窗里的「继续安装」，让 10 秒倒计时失效
+// 导入：GKD → 首页 → 订阅 → 本地订阅 → 应用规则 → 右上角 + → 粘贴下面 { } 整段
+// 实测：Xiaomi 17 / HyperOS 4.0.6 / GKD 1.13.2
+//
+// 来源：com.miui.securitycenter/com.miui.permcenter.install.AdbInstallVerifyActivity
+//      该弹窗没有系统开关（设置项不在 settings 数据库，存在安全中心私有配置，
+//      无 root 改不了），所以只能替你把按钮点掉。
+//
+// ⚠️ 代价：这等于自动同意「通过 USB 安装应用」，任何经该通道推来的安装请求都会放行，
+//         不再有人工确认。只要手动确认，就不要导入这条。
+
+{
+  id: 'com.miui.securitycenter',
+  name: '安全中心',
+  groups: [
+    {
+      key: 0,
+      name: 'USB安装提示-自动继续安装',
+      actionCd: 2000,
+      actionDelay: 200,
+      // 仅弹窗出现后的 8 秒内尝试，避免在其它界面误点同文案按钮
+      matchTime: 8000,
+      resetMatch: 'app',
+      rules: [
+        {
+          key: 0,
+          // 目标按钮：弹窗底部的「继续安装」
+          matches: '[text="继续安装"]',
+          // 保险：必须同时存在提示语，确认确实是 USB 安装弹窗
+          anyMatches: ['[text*="正在通过USB安装此应用"]'],
+        },
+      ],
+    },
+  ],
+}
