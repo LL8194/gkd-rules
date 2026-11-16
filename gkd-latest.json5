@@ -1,0 +1,101 @@
+// GKD 订阅 · HyperOS 安装相关「弹窗」与「通知」
+//
+// 添加方式：GKD → 订阅 → 右下角 + → 粘贴本文件的加速链接
+// 适用：Xiaomi / HyperOS（规则基于 Xiaomi 17 / HyperOS 4.0.6 / GKD 1.13.2 实测）
+//
+// ⚠️ 第二个应用规则会在「USB 安装提示」弹窗里自动点「继续安装」，
+//    等于自动同意通过 USB 安装应用。不需要这个行为，请单独关掉该规则组。
+
+{
+  id: 20261116,
+  name: 'HyperOS 安装弹窗与通知',
+  version: 2,
+  author: 'LL8194',
+  supportUri: 'https://github.com/LL8194/gkd-rules',
+  categories: [],
+  globalGroups: [],
+  apps: [
+    // ① 系统界面：自动划掉「由您的管理员安装」通知
+    // 该通知渠道 DEVICE_ADMIN_ALERTS 的 mBlockableSystem=false，系统禁止用户屏蔽，
+    // 只能事后清除（手工滑动已实测有效，通知计数立即归零）。
+    {
+      id: 'com.android.systemui',
+      name: '系统界面',
+      groups: [
+        {
+          key: 0,
+          name: '设备管理员安装提示-自动清除',
+          actionCd: 2000,
+          actionDelay: 250,
+          rules: [
+            {
+              key: 0,
+              // 命中通知正文；HyperOS 上该节点 resource-id 为 com.android.systemui:id/text
+              matches: '[text*="由您的管理员安装"]',
+              action: 'swipe',
+              swipeArg: {
+                // 从正文左边缘水平划到卡片右侧屏幕边缘外，等同手动滑除
+                start: { left: 0, top: 'height/2' },
+                end: { right: '-80', top: 'height/2' },
+                duration: 220,
+              },
+            },
+          ],
+        },
+      ],
+    },
+
+    // ② 安全中心：自动点掉「USB安装提示」弹窗里的「继续安装」
+    // 弹窗来自 com.miui.securitycenter/com.miui.permcenter.install.AdbInstallVerifyActivity，
+    // 该弹窗没有系统级开关（设置项不在 settings 数据库，存在安全中心私有配置，无 root 改不了）。
+    {
+      id: 'com.miui.securitycenter',
+      name: '安全中心',
+      groups: [
+        {
+          key: 0,
+          name: 'USB安装提示-自动继续安装',
+          actionCd: 2000,
+          actionDelay: 200,
+          // 仅弹窗出现后的 8 秒内尝试，避免在其它界面误点同文案按钮
+          matchTime: 8000,
+          resetMatch: 'app',
+          rules: [
+            {
+              key: 0,
+              // 目标按钮：弹窗底部的「继续安装」
+              matches: '[text="继续安装"]',
+              // 保险：必须同时存在提示语，确认确实是 USB 安装弹窗
+              anyMatches: ['[text*="正在通过USB安装此应用"]'],
+            },
+          ],
+        },
+      ],
+    },
+
+    // ③ 钉钉：跳过开屏广告
+    // 开屏广告是第三方投放（截图里那种品牌大图 + 右上角「跳过(3)」），
+    // 只认「跳过」开头的短文本，并限定 App 启动后 20 秒内生效，避免在聊天页误点。
+    {
+      id: 'com.alibaba.android.rimet',
+      name: '钉钉',
+      groups: [
+        {
+          key: 0,
+          name: '开屏广告',
+          fastQuery: true,
+          matchTime: 20000,
+          actionMaximum: 1,
+          resetMatch: 'app',
+          rules: [
+            {
+              key: 0,
+              // 「跳过」「跳过 3」「跳过广告」都能命中
+              matches: '[text*="跳过"][text.length<10][visibleToUser=true]',
+            },
+          ],
+        },
+      ],
+    },
+  ],
+}
