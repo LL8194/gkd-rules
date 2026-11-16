@@ -1,0 +1,33 @@
+// GKD 本地订阅 · 应用规则 ①：系统界面
+// 作用：自动划掉 Device Owner 静默安装后系统发的「由您的管理员安装」通知
+// 导入：GKD → 首页 → 订阅 → 本地订阅 → 应用规则 → 右上角 + → 粘贴下面 { } 整段
+// 实测：Xiaomi 17 / HyperOS 4.0.6 / GKD 1.13.2
+// 说明：该通知渠道 DEVICE_ADMIN_ALERTS 的 mBlockableSystem=false，系统禁止用户屏蔽，
+//      只能事后清除。手工滑动已实测有效（通知计数立即归零）。
+
+{
+  id: 'com.android.systemui',
+  name: '系统界面',
+  groups: [
+    {
+      key: 0,
+      name: '设备管理员安装提示-自动清除',
+      actionCd: 2000,
+      actionDelay: 250,
+      rules: [
+        {
+          key: 0,
+          // 命中通知正文；HyperOS 上该节点 resource-id 为 com.android.systemui:id/text
+          matches: '[text*="由您的管理员安装"]',
+          action: 'swipe',
+          swipeArg: {
+            // 从正文左边缘水平划到卡片右侧屏幕边缘外，等同手动滑除
+            start: { left: 0, top: 'height/2' },
+            end: { right: '-80', top: 'height/2' },
+            duration: 220,
+          },
+        },
+      ],
+    },
+  ],
+}
