@@ -1,0 +1,31 @@
+// GKD 本地订阅 · 应用规则 ③：钉钉
+// 作用：跳过钉钉开屏广告（第三方品牌投放图 + 右上角「跳过(3)」倒计时）
+// 导入：GKD → 首页 → 订阅 → 本地订阅 → 应用规则 → 右上角 + → 粘贴下面 { } 整段
+//
+// 思路：开屏广告的「跳过」按钮是纯文本节点，且只在启动后的前 20 秒内存在。
+//      所以限定 matchTime 20 秒 + 每个 App 生命周期只动作一次（actionMaximum 1），
+//      避免在聊天/工作台页面误点到同文案的元素。
+//
+// ⚠️ 未实测：钉钉各版本的跳过按钮文案可能是「跳过」「跳过 3」「跳过广告」，
+//    这里用 [text*="跳过"] 覆盖全部；若某版本按钮是纯图标无文本，这条不会命中。
+
+{
+  id: 'com.alibaba.android.rimet',
+  name: '钉钉',
+  groups: [
+    {
+      key: 0,
+      name: '开屏广告',
+      fastQuery: true,
+      matchTime: 20000,
+      actionMaximum: 1,
+      resetMatch: 'app',
+      rules: [
+        {
+          key: 0,
+          matches: '[text*="跳过"][text.length<10][visibleToUser=true]',
+        },
+      ],
+    },
+  ],
+}
