@@ -1,2 +1,58 @@
-# gkd-rules
-GKD rules for HyperOS install prompts / notifications
+# GKD 规则：HyperOS 安装弹窗与通知
+
+针对 HyperOS / 小米，处理「用 Shizuku / InstallerX 之类静默装应用」时冒出来的两处拦截。
+
+## 订阅链接（GKD → 订阅 → 右下角 + 粘贴）
+
+```
+https://raw.githubusercontent.com/LL8194/gkd-rules/main/gkd.json5
+```
+
+国内直连不通时用加速：
+
+```
+https://ghfast.top/https://raw.githubusercontent.com/LL8194/gkd-rules/main/gkd.json5
+https://ghproxy.net/https://raw.githubusercontent.com/LL8194/gkd-rules/main/gkd.json5
+https://raw.gitmirror.com/LL8194/gkd-rules/main/gkd.json5
+https://cdn.jsdelivr.net/gh/LL8194/gkd-rules@main/gkd.json5
+```
+
+## 两条规则分别干什么
+
+### ① 系统界面 `com.android.systemui` — 设备管理员安装提示-自动清除
+
+静默安装完成后，系统会发一条「由您的管理员安装」的通知。这个通知渠道
+`DEVICE_ADMIN_ALERTS` 的 `mBlockableSystem=false`、`mImportanceLockedDefaultApp=true`，
+**系统层面禁止用户屏蔽**，只能等 72 小时自动消失。
+
+所以这条规则不屏蔽、只清除：命中正文后水平滑出去，效果等同手动右滑。
+`actionCd: 2000` 表示 2 秒内不重复触发，避免连点。
+
+### ② 安全中心 `com.miui.securitycenter` — USB安装提示-自动继续安装
+
+弹窗来自 `com.miui.permcenter.install.AdbInstallVerifyActivity`，底下有 10 秒倒计时。
+三个候选系统键（`security_adb_install_enable`、`adb_install_packages`、
+`perm_adb_install_notify`）在 secure / global / system 三个命名空间里都是 `null`，
+所以 ADB 侧关不掉，只能替你把按钮点掉。
+
+匹配做了双重保险：必须同时出现「继续安装」按钮 **和** 「正在通过USB安装此应用」提示语，
+并限定弹窗出现后 8 秒窗口内尝试，避免在别的界面误点同文案按钮。
+
+**⚠️ 代价**：这条等于自动同意「通过 USB 安装应用」，任何经该通道推来的安装请求都会放行，
+不再有人工确认。只要还想人工看一眼，就在 GKD 里把这一组单独关掉。
+
+## 环境
+
+- 设备：Xiaomi 17
+- 系统：HyperOS 4.0.6
+- GKD：1.13.2
+
+规则里的节点文案来自这套环境的实际界面。其它机型/系统版本上文案不同会匹配不到，
+需要自己改 `matches` 里的文字。
+
+## 单独导入（不想加订阅）
+
+GKD → 订阅 → 本地订阅 → 应用规则 → 右上角 `+`，分别贴这两个文件里的对象（注释之外的 `{ }` 整段）：
+
+- `GKD规则1-自动清除管理员安装通知.json5`
+- `GKD规则2-自动确认USB安装提示.json5`
