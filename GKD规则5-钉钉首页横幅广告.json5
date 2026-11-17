@@ -1,0 +1,31 @@
+// GKD 规则 5 · 钉钉首页横幅广告（如「千问办公」推广卡）
+// 实测环境：Xiaomi 17 / 钉钉 9.0 / 2026-11-17，adb uiautomator 实抓节点
+//
+//   (52,508)-(1168,880) FrameLayout  vid=chatting_card_view      ← 横幅卡片容器
+//     (52,508)-(1168,880) ImageView  vid=image                   ← 广告图
+//     (1083,528)-(1148,593) FrameLayout vid=layout_close  clickable=true ← 右上角 X
+//       (1089,534)-(1141,586) TextView vid=icft_close
+//
+// 只在「卡片容器里的 layout_close」上点，避免误点聊天页/对话框的其它关闭按钮。
+
+{
+  id: 'com.alibaba.android.rimet',
+  name: '钉钉',
+  groups: [
+    {
+      key: 0,
+      name: '首页横幅广告-关闭',
+      fastQuery: true,
+      matchTime: 15000,
+      actionMaximum: 1,
+      resetMatch: 'app',
+      rules: [
+        {
+          key: 0,
+          matches: '[vid="layout_close"]',
+          anyMatches: ['[vid="chatting_card_view"]'],
+        },
+      ],
+    },
+  ],
+}
