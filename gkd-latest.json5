@@ -5,11 +5,12 @@
 //
 // ⚠️ 第二个应用规则会在「USB 安装提示」弹窗里自动点「继续安装」，
 //    等于自动同意通过 USB 安装应用。不需要这个行为，请单独关掉该规则组。
+// ⚠️ 影梭规则只点「忽略一次」，不会点「立即下载」，即永不触发应用更新。
 
 {
   id: 20261116,
   name: 'HyperOS 安装弹窗与通知',
-  version: 2,
+  version: 3,
   author: 'LL8194',
   supportUri: 'https://github.com/LL8194/gkd-rules',
   categories: [],
@@ -92,6 +93,33 @@
               key: 0,
               // 「跳过」「跳过 3」「跳过广告」都能命中
               matches: '[text*="跳过"][text.length<10][visibleToUser=true]',
+            },
+          ],
+        },
+      ],
+    },
+    // ④ 影梭（虚拟定位）：每次启动时的更新弹窗，自动点「忽略一次」，永不更新
+    // 实测环境：com.zcshou.gogogo 1.12.3，弹窗提示可更新到 v2.1.0（App 自带 GitHub 更新源检查）
+    // 按钮 resource-id 由 adb uiautomator dump 实抓：
+    //   「忽略一次」→ com.zcshou.gogogo:id/update_ignore
+    //   「立即下载」→ com.zcshou.gogogo:id/update_agree（本规则绝不点它）
+    // 弹窗带标题 update_title（内容固定为版本号 v二字开头），用它做保险避免误点其它页面按钮。
+    {
+      id: 'com.zcshou.gogogo',
+      name: '影梭',
+      groups: [
+        {
+          key: 0,
+          name: '更新弹窗-忽略一次',
+          fastQuery: true,
+          matchTime: 20000,
+          actionMaximum: 1,
+          resetMatch: 'app',
+          rules: [
+            {
+              key: 0,
+              matches: '[vid="update_ignore"]',
+              anyMatches: ['[vid="update_title"]'],
             },
           ],
         },
