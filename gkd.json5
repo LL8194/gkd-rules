@@ -1,24 +1,23 @@
-// GKD 订阅 · HyperOS 安装相关「弹窗」与「通知」
+// GKD 订阅 · HyperOS 安装弹窗与通知 + 钉钉 / 微信小程序广告
 //
-// 添加方式：GKD → 订阅 → 右下角 + → 粘贴本文件的加速链接
-// 适用：Xiaomi / HyperOS（规则基于 Xiaomi 17 / HyperOS 4.0.6 / GKD 1.13.2 实测）
+// 添加方式：GKD → 订阅 → 右下角 + → 粘贴订阅链接（或本地订阅 → 导入本文件）
+// 适用：Xiaomi / HyperOS（规则基于 Xiaomi 17 / HyperOS 4.0.6 / GKD 1.13.2 实机抓节点）
 //
 // ⚠️ 第二个应用规则会在「USB 安装提示」弹窗里自动点「继续安装」，
 //    等于自动同意通过 USB 安装应用。不需要这个行为，请单独关掉该规则组。
 // ⚠️ 影梭规则只点「忽略一次」，不会点「立即下载」，即永不触发应用更新。
+// ⚠️ 钉钉有两条：开屏广告（按文字「跳过」）+ 首页横幅推广卡（按 vid layout_close）。
 
 {
   id: 20261116,
   name: 'HyperOS 安装弹窗与通知',
-  version: 3,
+  version: 4,
   author: 'LL8194',
   supportUri: 'https://github.com/LL8194/gkd-rules',
   categories: [],
   globalGroups: [],
   apps: [
     // ① 系统界面：自动划掉「由您的管理员安装」通知
-    // 该通知渠道 DEVICE_ADMIN_ALERTS 的 mBlockableSystem=false，系统禁止用户屏蔽，
-    // 只能事后清除（手工滑动已实测有效，通知计数立即归零）。
     {
       id: 'com.android.systemui',
       name: '系统界面',
@@ -31,11 +30,9 @@
           rules: [
             {
               key: 0,
-              // 命中通知正文；HyperOS 上该节点 resource-id 为 com.android.systemui:id/text
               matches: '[text*="由您的管理员安装"]',
               action: 'swipe',
               swipeArg: {
-                // 从正文左边缘水平划到卡片右侧屏幕边缘外，等同手动滑除
                 start: { left: 0, top: 'height/2' },
                 end: { right: '-80', top: 'height/2' },
                 duration: 220,
@@ -47,8 +44,6 @@
     },
 
     // ② 安全中心：自动点掉「USB安装提示」弹窗里的「继续安装」
-    // 弹窗来自 com.miui.securitycenter/com.miui.permcenter.install.AdbInstallVerifyActivity，
-    // 该弹窗没有系统级开关（设置项不在 settings 数据库，存在安全中心私有配置，无 root 改不了）。
     {
       id: 'com.miui.securitycenter',
       name: '安全中心',
@@ -58,15 +53,12 @@
           name: 'USB安装提示-自动继续安装',
           actionCd: 2000,
           actionDelay: 200,
-          // 仅弹窗出现后的 8 秒内尝试，避免在其它界面误点同文案按钮
           matchTime: 8000,
           resetMatch: 'app',
           rules: [
             {
               key: 0,
-              // 目标按钮：弹窗底部的「继续安装」
               matches: '[text="继续安装"]',
-              // 保险：必须同时存在提示语，确认确实是 USB 安装弹窗
               anyMatches: ['[text*="正在通过USB安装此应用"]'],
             },
           ],
@@ -74,9 +66,7 @@
       ],
     },
 
-    // ③ 钉钉：跳过开屏广告
-    // 开屏广告是第三方投放（截图里那种品牌大图 + 右上角「跳过(3)」），
-    // 只认「跳过」开头的短文本，并限定 App 启动后 20 秒内生效，避免在聊天页误点。
+    // ③ 钉钉
     {
       id: 'com.alibaba.android.rimet',
       name: '钉钉',
@@ -91,19 +81,31 @@
           rules: [
             {
               key: 0,
-              // 「跳过」「跳过 3」「跳过广告」都能命中
               matches: '[text*="跳过"][text.length<10][visibleToUser=true]',
+            },
+          ],
+        },
+        {
+          // 实测 2026-11-17：首页顶部横幅推广卡（如「千问办公」）
+          //   vid=chatting_card_view 是卡片容器，vid=layout_close 是右上角 X
+          key: 1,
+          name: '首页横幅广告-关闭',
+          fastQuery: true,
+          matchTime: 15000,
+          actionMaximum: 1,
+          resetMatch: 'app',
+          rules: [
+            {
+              key: 0,
+              matches: '[vid="layout_close"]',
+              anyMatches: ['[vid="chatting_card_view"]'],
             },
           ],
         },
       ],
     },
+
     // ④ 影梭（虚拟定位）：每次启动时的更新弹窗，自动点「忽略一次」，永不更新
-    // 实测环境：com.zcshou.gogogo 1.12.3，弹窗提示可更新到 v2.1.0（App 自带 GitHub 更新源检查）
-    // 按钮 resource-id 由 adb uiautomator dump 实抓：
-    //   「忽略一次」→ com.zcshou.gogogo:id/update_ignore
-    //   「立即下载」→ com.zcshou.gogogo:id/update_agree（本规则绝不点它）
-    // 弹窗带标题 update_title（内容固定为版本号 v二字开头），用它做保险避免误点其它页面按钮。
     {
       id: 'com.zcshou.gogogo',
       name: '影梭',
@@ -120,6 +122,34 @@
               key: 0,
               matches: '[vid="update_ignore"]',
               anyMatches: ['[vid="update_title"]'],
+            },
+          ],
+        },
+      ],
+    },
+
+    // ⑤ 微信：小程序里的广告浮层
+    // 实测 2026-11-17，小程序「美团骑行」：
+    //   「广告」角标 (923,395)-(988,447)
+    //   关闭 X = ImageView (1125,399)-(1170,444)，无 text/desc，只能按位置认
+    // 三重保险：裸小 ImageView + 页面有「广告」+ 页面有小程序胶囊 desc="关闭"
+    // ⚠️ 只覆盖「右上角小浮层」；「外卖营销弹窗」X 在下方中间，需另行实测补规则
+    {
+      id: 'com.tencent.mm',
+      name: '微信',
+      groups: [
+        {
+          key: 0,
+          name: '小程序广告浮层-关闭',
+          fastQuery: true,
+          matchTime: 30000,
+          actionMaximum: 1,
+          resetMatch: 'activity',
+          rules: [
+            {
+              key: 0,
+              matches: 'ImageView[text=null][desc=null][left>1000][top<600][width<80][height<80]',
+              anyMatches: ['[text="广告"]', '[desc="关闭"]'],
             },
           ],
         },
