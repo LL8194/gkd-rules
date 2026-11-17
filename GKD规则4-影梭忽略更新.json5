@@ -1,0 +1,37 @@
+// GKD 本地订阅 · 应用规则 ④：影梭（虚拟定位）
+// 作用：每次打开影梭时的「更新提示」弹窗，自动点左下角「忽略一次」，永不更新
+// 导入：GKD → 首页 → 订阅 → 本地订阅 → 应用规则 → 右上角 + → 粘贴下面 { } 整段
+//
+// 实测环境：影梭 com.zcshou.gogogo 1.12.3（弹窗提示可更新到 v2.1.0，更新源为 App 自带的 GitHub 检查）
+// 界面节点由 adb uiautomator dump 实抓，弹窗结构：
+//   v2.1.0              com.zcshou.gogogo:id/update_title
+//   更新时间 / 提交信息  com.zcshou.gogogo:id/update_time、update_commit
+//   更新正文（可滚动）    com.zcshou.gogogo:id/update_content
+//   忽略一次            com.zcshou.gogogo:id/update_ignore   ← 本规则只点这个
+//   立即下载            com.zcshou.gogogo:id/update_agree    ← 绝不点，避免更新后清空位置/路线历史
+//
+// 思路：用 resource-id 精确定位按钮（比文本「忽略一次」更稳，且不受多语言影响）；
+//      再要求同一界面存在 update_title 作保险，避免在别的页面误点到同名 id 的按钮。
+//      matchTime 20 秒覆盖启动过程中的弹窗延迟；每个 App 生命周期只动作一次。
+
+{
+  id: 'com.zcshou.gogogo',
+  name: '影梭',
+  groups: [
+    {
+      key: 0,
+      name: '更新弹窗-忽略一次',
+      fastQuery: true,
+      matchTime: 20000,
+      actionMaximum: 1,
+      resetMatch: 'app',
+      rules: [
+        {
+          key: 0,
+          matches: '[vid="update_ignore"]',
+          anyMatches: ['[vid="update_title"]'],
+        },
+      ],
+    },
+  ],
+}
