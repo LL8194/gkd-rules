@@ -1,0 +1,36 @@
+// GKD 规则 6 · 微信小程序里的广告浮层（点右上角那个小关闭图标）
+// 实测环境：Xiaomi 17 / 微信、小程序「美团骑行」/ 2026-11-17，adb uiautomator 实抓节点
+//
+//   「广告」角标 TextView (923,395)-(988,447)
+//   关闭 X  = ImageView   (1125,399)-(1170,444)   ← 无 text、无 desc，只能按位置认
+//   右上角还有小程序自带的胶囊：desc="更多" / desc="关闭"（vid go / gn，156x144 太大，不会被误选）
+//
+// 三重保险，缺一不点：
+//   ① 小图标是 45~80px 的裸 ImageView（无文字）
+//   ② 页面里出现「广告」字样
+//   ③ 页面里有小程序权限胶囊 desc="关闭"
+//
+// ⚠️ 只覆盖「右上角小浮层」这一种广告；「外卖营销弹窗」那种 X 在画面下方中间，位置不同，
+//    需要另行实测后单独加规则（同组里再开一个 key）。
+
+{
+  id: 'com.tencent.mm',
+  name: '微信',
+  groups: [
+    {
+      key: 0,
+      name: '小程序广告浮层-关闭',
+      fastQuery: true,
+      matchTime: 30000,
+      actionMaximum: 1,
+      resetMatch: 'activity',
+      rules: [
+        {
+          key: 0,
+          matches: 'ImageView[text=null][desc=null][left>1000][top<600][width<80][height<80]',
+          anyMatches: ['[text="广告"]', '[desc="关闭"]'],
+        },
+      ],
+    },
+  ],
+}
