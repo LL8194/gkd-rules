@@ -1,16 +1,12 @@
-// GKD 规则 6 · 微信小程序里的广告（开屏「跳过」+ 浮层关闭 X + 广告角标菜单）
+// GKD 规则 6 · 微信小程序里的广告（开屏「跳过」+ 浮层关闭 X + 诊断组）
 // 实测环境：Xiaomi 17 / HyperOS 4.0.6 / GKD 1.13.2 / 2026-11-18
-// 窗口：com.tencent.mm / .plugin.appbrand.ui.AppBrandUI00（小程序「美团骑行」）
+// 窗口：com.tencent.mm / .plugin.appbrand.ui.AppBrandUI00
 //
-//   开屏广告 ： 「广告 ∨」[78,191][169,256]，「跳过」[273,191][373,256]，右侧「N 秒」倒计时
-//   首页浮层 ： 关闭 X = 图标字体 TextView \ue003 [1062,390][1124,455]（容器 [1069,392][1189,489]）
-//               同一页右上角「我的」笑脸也是 \ue003 [1056,357][1118,422] → 靠 top>=385 排除
-//
-// ⚠️ 三条实测教训，缺一条就不动作：
-//   1) 不要开 fastQuery —— 小程序节点变化不一定推给无障碍，快速查询会漏；
-//   2) actionMaximum 用 0 —— 小程序复用同一个 AppBrandUI00，写 1 会导致之后再进不再触发；
-//   3) action 必须是 'clickCenter' —— 「跳过」是 clickable=false 的 TextView，
-//      默认 clickNode 会沿父链找可点击祖先，找不到就整条放弃（表现为完全不动）。
+// 四条实测教训（缺一条就不动作）：
+//   1) 不要开 fastQuery —— 小程序节点变化不一定推给无障碍；
+//   2) action 用 'clickCenter' —— 「跳过」是 clickable=false 的 TextView，默认 clickNode 找不到可点祖先就放弃；
+//   3) actionMaximum 显式写 1，不写 0（避免语义歧义）；
+//   4) 组 9 是诊断组：匹配首页「美团单车」标题，有它的触发记录就说明 GKD 能在这个窗口工作。
 //
 // 用法：GKD → 订阅 → 本地订阅 → 应用规则 → ＋ → 粘贴下面整段对象
 
@@ -22,7 +18,7 @@
       key: 0,
       name: '小程序开屏-跳过',
       matchTime: 20000,
-      actionMaximum: 0,
+      actionMaximum: 1,
       actionCd: 300,
       resetMatch: 'app',
       rules: [
@@ -37,7 +33,7 @@
       key: 1,
       name: '小程序浮层广告-关闭',
       matchTime: 30000,
-      actionMaximum: 0,
+      actionMaximum: 2,
       actionCd: 500,
       resetMatch: 'app',
       rules: [
@@ -83,14 +79,15 @@
     {
       key: 9,
       name: '诊断-微信窗口可达性',
-      matchTime: 0,
-      actionMaximum: 0,
-      actionCd: 5000,
+      matchTime: 20000,
+      actionMaximum: 3,
+      actionCd: 3000,
       resetMatch: 'app',
       rules: [
         {
           key: 0,
-          matches: '[text="广告由微信提供"]',
+          matches: '[text*="美团单车"]',
+          action: 'clickCenter',
         },
       ],
     },

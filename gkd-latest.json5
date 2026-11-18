@@ -3,14 +3,16 @@
 // 添加方式：GKD → 订阅 → 右下角 + → 粘贴订阅链接
 // 适用：Xiaomi / HyperOS（基于 Xiaomi 17 / HyperOS 4.0.6 / GKD 1.13.2 实机抓节点）
 //
-// 实测要点（2026-11-18）：
-//   微信小程序开屏的「跳过」是 clickable=false 的 TextView，GKD 默认 clickNode
-//   会沿父链找可点击祖先，找不到就放弃 → 必须显式 action: 'clickCenter'。
+// 微信小程序（v9 起）：
+//   · 不用 fastQuery（小程序节点事件不稳定）
+//   · action 用 clickCenter（「跳过」是 clickable=false 的 TextView）
+//   · actionMaximum 显式写 1（不用 0，避免被当成“最多 0 次”）
+//   · 组 9「诊断-微信窗口可达性」匹配首页「美团单车」标题，只验证 GKD 能否在该窗口触发
 //
 {
   id: 20261116,
   name: 'HyperOS 安装弹窗与通知',
-  version: 8,
+  version: 9,
   author: 'LL8194',
   supportUri: 'https://github.com/LL8194/gkd-rules',
   categories: [],
@@ -137,7 +139,7 @@
           key: 0,
           name: '小程序开屏-跳过',
           matchTime: 20000,
-          actionMaximum: 0,
+          actionMaximum: 1,
           actionCd: 300,
           resetMatch: 'app',
           rules: [
@@ -152,7 +154,7 @@
           key: 1,
           name: '小程序浮层广告-关闭',
           matchTime: 30000,
-          actionMaximum: 0,
+          actionMaximum: 2,
           actionCd: 500,
           resetMatch: 'app',
           rules: [
@@ -198,14 +200,15 @@
         {
           key: 9,
           name: '诊断-微信窗口可达性',
-          matchTime: 0,
-          actionMaximum: 0,
-          actionCd: 5000,
+          matchTime: 20000,
+          actionMaximum: 3,
+          actionCd: 3000,
           resetMatch: 'app',
           rules: [
             {
               key: 0,
-              matches: '[text="广告由微信提供"]',
+              matches: '[text*="美团单车"]',
+              action: 'clickCenter',
             },
           ],
         },
@@ -219,7 +222,7 @@
           key: 0,
           name: '小程序开屏-跳过',
           matchTime: 20000,
-          actionMaximum: 0,
+          actionMaximum: 1,
           actionCd: 300,
           resetMatch: 'app',
           rules: [
