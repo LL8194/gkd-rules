@@ -8,6 +8,7 @@
 //      会把营销弹窗（「点外卖 送次卡」「首单外卖 0 元吃」）画在不暴露给无障碍的自绘层，
 //      实抓节点树：178003 字符里「点外卖 / 送次卡 / 关闭」计数全为 0、ImageView 计数 0。
 //      节点类规则无法关闭这类弹窗，因此这里只保留开屏「跳过」。
+//   ③ 不开 fastQuery、actionMaximum 用 0，理由同规则 6。
 //
 // 用法：GKD → 订阅 → 本地订阅 → 应用规则 → ＋ → 粘贴下面整段对象
 
@@ -18,14 +19,14 @@
     {
       key: 0,
       name: '小程序开屏-跳过',
-      fastQuery: true,
-      matchTime: 15000,
-      actionMaximum: 1,
+      matchTime: 20000,
+      actionMaximum: 0,
+      actionCd: 300,
       resetMatch: 'activity',
       rules: [
         {
           key: 0,
-          matches: '[text="跳过"][text.length<10][visibleToUser=true]',
+          matches: '[text*="跳过"][text.length<10][visibleToUser=true]',
         },
       ],
     },

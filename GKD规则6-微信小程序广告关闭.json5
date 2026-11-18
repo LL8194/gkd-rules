@@ -7,6 +7,10 @@
 //               同一页右上角「我的」笑脸图标也是 \ue003 [1056,357][1118,422] → 靠 top>=385 排除
 //   底部信息流： 「广告」[81,2015][152,2054] + 「广告由微信提供」[39,2619][1183,2656]
 //
+// ⚠️ 不要开 fastQuery：小程序节点变化不一定推给无障碍，快速查询会漏掉「跳过」，
+//    实测开了 fastQuery 时开屏广告全程不动作（18:35 一次都没点）。
+// ⚠️ actionMaximum 用 0（不限次）：小程序复用同一个 AppBrandUI00，写 1 会导致进第二次时不再触发。
+//
 // 用法：GKD → 订阅 → 本地订阅 → 应用规则 → ＋ → 粘贴下面整段对象
 
 {
@@ -14,28 +18,25 @@
   name: '微信',
   groups: [
     {
-      // 小程序启动时的开屏广告，左上角「跳过」
       key: 0,
       name: '小程序开屏-跳过',
-      fastQuery: true,
-      matchTime: 15000,
-      actionMaximum: 1,
+      matchTime: 20000,
+      actionMaximum: 0,
+      actionCd: 300,
       resetMatch: 'activity',
       rules: [
         {
           key: 0,
-          matches: '[text="跳过"][text.length<10][visibleToUser=true]',
+          matches: '[text*="跳过"][text.length<10][visibleToUser=true]',
         },
       ],
     },
     {
-      // 首页右上角浮层广告的 X（实测点 [1125,440] 可关闭）
       key: 1,
       name: '小程序浮层广告-关闭',
-      fastQuery: true,
       matchTime: 30000,
-      actionMaximum: 2,
-      actionCd: 800,
+      actionMaximum: 0,
+      actionCd: 500,
       resetMatch: 'activity',
       rules: [
         {
@@ -45,13 +46,11 @@
       ],
     },
     {
-      // 只有「广告 ∨」角标、没有 X 的弹窗：先点角标展开菜单
       key: 2,
       name: '广告角标-点开',
-      fastQuery: true,
       actionCd: 1500,
       matchTime: 20000,
-      actionMaximum: 1,
+      actionMaximum: 0,
       resetMatch: 'activity',
       rules: [
         {
@@ -64,9 +63,8 @@
     {
       key: 3,
       name: '广告菜单-关闭广告',
-      fastQuery: true,
       matchTime: 8000,
-      actionMaximum: 1,
+      actionMaximum: 0,
       resetMatch: 'activity',
       rules: [
         {

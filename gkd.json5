@@ -14,7 +14,7 @@
 {
   id: 20261116,
   name: 'HyperOS 安装弹窗与通知',
-  version: 5,
+  version: 6,
   author: 'LL8194',
   supportUri: 'https://github.com/LL8194/gkd-rules',
   categories: [],
@@ -142,17 +142,18 @@
       name: '微信',
       groups: [
         {
-          // 小程序启动时的开屏广告，左上角倒计时
+          // 小程序启动时的开屏广告，左上角「广告 ∨ | 跳过 | 2 秒」
+          // 不用 fastQuery：小程序的节点变化不一定推给无障碍，快速查询会漏
           key: 0,
           name: '小程序开屏-跳过',
-          fastQuery: true,
-          matchTime: 15000,
-          actionMaximum: 1,
+          matchTime: 20000,
+          actionMaximum: 0,
+          actionCd: 300,
           resetMatch: 'activity',
           rules: [
             {
               key: 0,
-              matches: '[text="跳过"][text.length<10][visibleToUser=true]',
+              matches: '[text*="跳过"][text.length<10][visibleToUser=true]',
             },
           ],
         },
@@ -160,10 +161,9 @@
           // 首页右上角浮层广告的 X（实测点 [1125,440] 可关闭）
           key: 1,
           name: '小程序浮层广告-关闭',
-          fastQuery: true,
           matchTime: 30000,
-          actionMaximum: 2,
-          actionCd: 800,
+          actionMaximum: 0,
+          actionCd: 500,
           resetMatch: 'activity',
           rules: [
             {
@@ -176,10 +176,9 @@
           // 只有「广告 ∨」角标、没有 X 的弹窗：先点角标展开菜单
           key: 2,
           name: '广告角标-点开',
-          fastQuery: true,
           actionCd: 1500,
           matchTime: 20000,
-          actionMaximum: 1,
+          actionMaximum: 0,
           resetMatch: 'activity',
           rules: [
             {
@@ -192,9 +191,8 @@
         {
           key: 3,
           name: '广告菜单-关闭广告',
-          fastQuery: true,
           matchTime: 8000,
-          actionMaximum: 1,
+          actionMaximum: 0,
           resetMatch: 'activity',
           rules: [
             {
@@ -215,14 +213,14 @@
         {
           key: 0,
           name: '小程序开屏-跳过',
-          fastQuery: true,
-          matchTime: 15000,
-          actionMaximum: 1,
+          matchTime: 20000,
+          actionMaximum: 0,
+          actionCd: 300,
           resetMatch: 'activity',
           rules: [
             {
               key: 0,
-              matches: '[text="跳过"][text.length<10][visibleToUser=true]',
+              matches: '[text*="跳过"][text.length<10][visibleToUser=true]',
             },
           ],
         },
