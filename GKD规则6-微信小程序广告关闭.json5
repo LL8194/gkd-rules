@@ -1,34 +1,77 @@
-// GKD 规则 6 · 微信小程序里的广告浮层（点右上角那个小关闭图标）
-// 实测环境：Xiaomi 17 / 微信、小程序「美团骑行」/ 2026-11-17，adb uiautomator 实抓节点
+// GKD 规则 6 · 微信小程序里的广告（开屏「跳过」+ 浮层关闭 X + 广告角标菜单）
+// 实测环境：Xiaomi 17 / HyperOS 4.0.6 / GKD 1.13.2 / 2026-11-18
+// 窗口：com.tencent.mm / .plugin.appbrand.ui.AppBrandUI00（小程序「美团骑行」）
 //
-//   「广告」角标 TextView (923,395)-(988,447)
-//   关闭 X  = ImageView   (1125,399)-(1170,444)   ← 无 text、无 desc，只能按位置认
-//   右上角还有小程序自带的胶囊：desc="更多" / desc="关闭"（vid go / gn，156x144 太大，不会被误选）
+//   开屏广告 ： 「广告 ∨」TextView [78,191][169,256]，「跳过」[273,191][373,256]，右侧「2 秒」倒计时
+//   首页浮层 ： 关闭 X = 图标字体 TextView \ue003 [1062,390][1124,455]（容器 FrameLayout [1069,392][1189,489]）
+//               同一页右上角「我的」笑脸图标也是 \ue003 [1056,357][1118,422] → 靠 top>=385 排除
+//   底部信息流： 「广告」[81,2015][152,2054] + 「广告由微信提供」[39,2619][1183,2656]
 //
-// 三重保险，缺一不点：
-//   ① 小图标是 45~80px 的裸 ImageView（无文字）
-//   ② 页面里出现「广告」字样
-//   ③ 页面里有小程序权限胶囊 desc="关闭"
-//
-// ⚠️ 只覆盖「右上角小浮层」这一种广告；「外卖营销弹窗」那种 X 在画面下方中间，位置不同，
-//    需要另行实测后单独加规则（同组里再开一个 key）。
+// 用法：GKD → 订阅 → 本地订阅 → 应用规则 → ＋ → 粘贴下面整段对象
 
 {
   id: 'com.tencent.mm',
   name: '微信',
   groups: [
     {
+      // 小程序启动时的开屏广告，左上角「跳过」
       key: 0,
-      name: '小程序广告浮层-关闭',
+      name: '小程序开屏-跳过',
       fastQuery: true,
-      matchTime: 30000,
+      matchTime: 15000,
       actionMaximum: 1,
       resetMatch: 'activity',
       rules: [
         {
           key: 0,
-          matches: 'ImageView[text=null][desc=null][left>1000][top<600][width<80][height<80]',
-          anyMatches: ['[text="广告"]', '[desc="关闭"]'],
+          matches: '[text="跳过"][text.length<10][visibleToUser=true]',
+        },
+      ],
+    },
+    {
+      // 首页右上角浮层广告的 X（实测点 [1125,440] 可关闭）
+      key: 1,
+      name: '小程序浮层广告-关闭',
+      fastQuery: true,
+      matchTime: 30000,
+      actionMaximum: 2,
+      actionCd: 800,
+      resetMatch: 'activity',
+      rules: [
+        {
+          key: 0,
+          matches: '[text="\ue003"][left>=1050][left<=1085][top>=385][top<=405][bottom<480]',
+        },
+      ],
+    },
+    {
+      // 只有「广告 ∨」角标、没有 X 的弹窗：先点角标展开菜单
+      key: 2,
+      name: '广告角标-点开',
+      fastQuery: true,
+      actionCd: 1500,
+      matchTime: 20000,
+      actionMaximum: 1,
+      resetMatch: 'activity',
+      rules: [
+        {
+          key: 0,
+          matches: '[text="广告"][width<200][left<300][visibleToUser=true]',
+          anyMatches: ['[text*="全部行程"]', '[text="去骑车"]', '[text*="骑行"]'],
+        },
+      ],
+    },
+    {
+      key: 3,
+      name: '广告菜单-关闭广告',
+      fastQuery: true,
+      matchTime: 8000,
+      actionMaximum: 1,
+      resetMatch: 'activity',
+      rules: [
+        {
+          key: 0,
+          matches: '[text*="关闭广告"]',
         },
       ],
     },

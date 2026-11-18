@@ -7,11 +7,14 @@
 //    等于自动同意通过 USB 安装应用。不需要这个行为，请单独关掉该规则组。
 // ⚠️ 影梭规则只点「忽略一次」，不会点「立即下载」，即永不触发应用更新。
 // ⚠️ 钉钉有两条：开屏广告（按文字「跳过」）+ 首页横幅推广卡（按 vid layout_close）。
+// ⚠️ 美团 App 内的小程序（com.sankuai.meituan）会把广告弹窗画在不暴露给无障碍的
+//    自绘层里（整棵节点树 0 个 ImageView、无「关闭」文本），节点类规则对该弹窗无效，
+//    仅保留开屏「跳过」这一条按文字的规则。
 
 {
   id: 20261116,
   name: 'HyperOS 安装弹窗与通知',
-  version: 4,
+  version: 5,
   author: 'LL8194',
   supportUri: 'https://github.com/LL8194/gkd-rules',
   categories: [],
@@ -128,28 +131,98 @@
       ],
     },
 
-    // ⑤ 微信：小程序里的广告浮层
-    // 实测 2026-11-17，小程序「美团骑行」：
-    //   「广告」角标 (923,395)-(988,447)
-    //   关闭 X = ImageView (1125,399)-(1170,444)，无 text/desc，只能按位置认
-    // 三重保险：裸小 ImageView + 页面有「广告」+ 页面有小程序胶囊 desc="关闭"
-    // ⚠️ 只覆盖「右上角小浮层」；「外卖营销弹窗」X 在下方中间，需另行实测补规则
+    // ⑤ 微信：小程序里的广告（窗口是 com.tencent.mm / .plugin.appbrand.ui.AppBrandUI00）
+    // 2026-11-18 实机抓节点复验：
+    //   开屏广告 → 「跳过」TextView [273,191][373,256]，「广告」[78,191][169,256]，倒计时「1」「秒」
+    //   首页浮层 → 关闭 X 是图标字体 TextView \ue003 [1062,390][1124,455]（容器 FrameLayout [1069,392][1189,489]）
+    //             同页右上角「我的」笑脸图标也是 \ue003，但在 [1056,357][1118,422]，靠 top>=380 区分
+    //   底部信息流 → 「广告」[81,2015][152,2054] + 「广告由微信提供」
     {
       id: 'com.tencent.mm',
       name: '微信',
       groups: [
         {
+          // 小程序启动时的开屏广告，左上角倒计时
           key: 0,
-          name: '小程序广告浮层-关闭',
+          name: '小程序开屏-跳过',
           fastQuery: true,
-          matchTime: 30000,
+          matchTime: 15000,
           actionMaximum: 1,
           resetMatch: 'activity',
           rules: [
             {
               key: 0,
-              matches: 'ImageView[text=null][desc=null][left>1000][top<600][width<80][height<80]',
-              anyMatches: ['[text="广告"]', '[desc="关闭"]'],
+              matches: '[text="跳过"][text.length<10][visibleToUser=true]',
+            },
+          ],
+        },
+        {
+          // 首页右上角浮层广告的 X（实测点 [1125,440] 可关闭）
+          key: 1,
+          name: '小程序浮层广告-关闭',
+          fastQuery: true,
+          matchTime: 30000,
+          actionMaximum: 2,
+          actionCd: 800,
+          resetMatch: 'activity',
+          rules: [
+            {
+              key: 0,
+              matches: '[text="\ue003"][left>=1050][left<=1085][top>=385][top<=405][bottom<480]',
+            },
+          ],
+        },
+        {
+          // 只有「广告 ∨」角标、没有 X 的弹窗：先点角标展开菜单
+          key: 2,
+          name: '广告角标-点开',
+          fastQuery: true,
+          actionCd: 1500,
+          matchTime: 20000,
+          actionMaximum: 1,
+          resetMatch: 'activity',
+          rules: [
+            {
+              key: 0,
+              matches: '[text="广告"][width<200][left<300][visibleToUser=true]',
+              anyMatches: ['[text*="全部行程"]', '[text="去骑车"]', '[text*="骑行"]'],
+            },
+          ],
+        },
+        {
+          key: 3,
+          name: '广告菜单-关闭广告',
+          fastQuery: true,
+          matchTime: 8000,
+          actionMaximum: 1,
+          resetMatch: 'activity',
+          rules: [
+            {
+              key: 0,
+              matches: '[text*="关闭广告"]',
+            },
+          ],
+        },
+      ],
+    },
+
+    // ⑥ 美团 App 内的小程序容器：只保留开屏「跳过」
+    //    营销弹窗（点外卖送次卡 / 首单外卖0元吃）被画在自绘层，无障碍树里没有节点，无法自动关闭
+    {
+      id: 'com.sankuai.meituan',
+      name: '美团',
+      groups: [
+        {
+          key: 0,
+          name: '小程序开屏-跳过',
+          fastQuery: true,
+          matchTime: 15000,
+          actionMaximum: 1,
+          resetMatch: 'activity',
+          rules: [
+            {
+              key: 0,
+              matches: '[text="跳过"][text.length<10][visibleToUser=true]',
             },
           ],
         },
