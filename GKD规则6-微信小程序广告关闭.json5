@@ -20,14 +20,14 @@
     {
       key: 0,
       name: '小程序开屏-跳过',
-      matchTime: 20000,
+      matchTime: 0,
       actionMaximum: 0,
       actionCd: 300,
-      resetMatch: 'activity',
+      resetMatch: 'app',
       rules: [
         {
           key: 0,
-          matches: '[text*="跳过"][text.length<10][visibleToUser=true]',
+          matches: '[text*="跳过"]',
         },
       ],
     },
