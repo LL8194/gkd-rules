@@ -1,26 +1,21 @@
-// GKD 订阅 · HyperOS 安装弹窗与通知 + 钉钉 / 微信小程序广告
+// GKD 订阅 · HyperOS 安装弹窗与通知 + 钉钉 / 微信小程序广告 + 美团
 //
-// 添加方式：GKD → 订阅 → 右下角 + → 粘贴订阅链接（或本地订阅 → 导入本文件）
-// 适用：Xiaomi / HyperOS（规则基于 Xiaomi 17 / HyperOS 4.0.6 / GKD 1.13.2 实机抓节点）
+// 添加方式：GKD → 订阅 → 右下角 + → 粘贴订阅链接
+// 适用：Xiaomi / HyperOS（基于 Xiaomi 17 / HyperOS 4.0.6 / GKD 1.13.2 实机抓节点）
 //
-// ⚠️ 第二个应用规则会在「USB 安装提示」弹窗里自动点「继续安装」，
-//    等于自动同意通过 USB 安装应用。不需要这个行为，请单独关掉该规则组。
-// ⚠️ 影梭规则只点「忽略一次」，不会点「立即下载」，即永不触发应用更新。
-// ⚠️ 钉钉有两条：开屏广告（按文字「跳过」）+ 首页横幅推广卡（按 vid layout_close）。
-// ⚠️ 美团 App 内的小程序（com.sankuai.meituan）会把广告弹窗画在不暴露给无障碍的
-//    自绘层里（整棵节点树 0 个 ImageView、无「关闭」文本），节点类规则对该弹窗无效，
-//    仅保留开屏「跳过」这一条按文字的规则。
-
+// 实测要点（2026-11-18）：
+//   微信小程序开屏的「跳过」是 clickable=false 的 TextView，GKD 默认 clickNode
+//   会沿父链找可点击祖先，找不到就放弃 → 必须显式 action: 'clickCenter'。
+//
 {
   id: 20261116,
   name: 'HyperOS 安装弹窗与通知',
-  version: 7,
+  version: 8,
   author: 'LL8194',
   supportUri: 'https://github.com/LL8194/gkd-rules',
   categories: [],
   globalGroups: [],
   apps: [
-    // ① 系统界面：自动划掉「由您的管理员安装」通知
     {
       id: 'com.android.systemui',
       name: '系统界面',
@@ -36,8 +31,14 @@
               matches: '[text*="由您的管理员安装"]',
               action: 'swipe',
               swipeArg: {
-                start: { left: 0, top: 'height/2' },
-                end: { right: '-80', top: 'height/2' },
+                start: {
+                  left: 0,
+                  top: 'height/2',
+                },
+                end: {
+                  right: '-80',
+                  top: 'height/2',
+                },
                 duration: 220,
               },
             },
@@ -45,8 +46,6 @@
         },
       ],
     },
-
-    // ② 安全中心：自动点掉「USB安装提示」弹窗里的「继续安装」
     {
       id: 'com.miui.securitycenter',
       name: '安全中心',
@@ -62,14 +61,14 @@
             {
               key: 0,
               matches: '[text="继续安装"]',
-              anyMatches: ['[text*="正在通过USB安装此应用"]'],
+              anyMatches: [
+                '[text*="正在通过USB安装此应用"]',
+              ],
             },
           ],
         },
       ],
     },
-
-    // ③ 钉钉
     {
       id: 'com.alibaba.android.rimet',
       name: '钉钉',
@@ -89,8 +88,6 @@
           ],
         },
         {
-          // 实测 2026-11-17：首页顶部横幅推广卡（如「千问办公」）
-          //   vid=chatting_card_view 是卡片容器，vid=layout_close 是右上角 X
           key: 1,
           name: '首页横幅广告-关闭',
           fastQuery: true,
@@ -101,14 +98,14 @@
             {
               key: 0,
               matches: '[vid="layout_close"]',
-              anyMatches: ['[vid="chatting_card_view"]'],
+              anyMatches: [
+                '[vid="chatting_card_view"]',
+              ],
             },
           ],
         },
       ],
     },
-
-    // ④ 影梭（虚拟定位）：每次启动时的更新弹窗，自动点「忽略一次」，永不更新
     {
       id: 'com.zcshou.gogogo',
       name: '影梭',
@@ -124,29 +121,22 @@
             {
               key: 0,
               matches: '[vid="update_ignore"]',
-              anyMatches: ['[vid="update_title"]'],
+              anyMatches: [
+                '[vid="update_title"]',
+              ],
             },
           ],
         },
       ],
     },
-
-    // ⑤ 微信：小程序里的广告（窗口是 com.tencent.mm / .plugin.appbrand.ui.AppBrandUI00）
-    // 2026-11-18 实机抓节点复验：
-    //   开屏广告 → 「跳过」TextView [273,191][373,256]，「广告」[78,191][169,256]，倒计时「1」「秒」
-    //   首页浮层 → 关闭 X 是图标字体 TextView \ue003 [1062,390][1124,455]（容器 FrameLayout [1069,392][1189,489]）
-    //             同页右上角「我的」笑脸图标也是 \ue003，但在 [1056,357][1118,422]，靠 top>=380 区分
-    //   底部信息流 → 「广告」[81,2015][152,2054] + 「广告由微信提供」
     {
       id: 'com.tencent.mm',
       name: '微信',
       groups: [
         {
-          // 小程序启动时的开屏广告，左上角「广告 ∨ | 跳过 | 2 秒」
-          // 只留 text 条件：visibleToUser / text.length 在微信自绘页面里会把规则整条挂掉
           key: 0,
           name: '小程序开屏-跳过',
-          matchTime: 0,
+          matchTime: 20000,
           actionMaximum: 0,
           actionCd: 300,
           resetMatch: 'app',
@@ -154,26 +144,26 @@
             {
               key: 0,
               matches: '[text*="跳过"]',
+              action: 'clickCenter',
             },
           ],
         },
         {
-          // 首页右上角浮层广告的 X（实测点 [1125,440] 可关闭）
           key: 1,
           name: '小程序浮层广告-关闭',
           matchTime: 30000,
           actionMaximum: 0,
           actionCd: 500,
-          resetMatch: 'activity',
+          resetMatch: 'app',
           rules: [
             {
               key: 0,
               matches: '[text="\ue003"][left>=1050][left<=1085][top>=385][top<=405][bottom<480]',
+              action: 'clickCenter',
             },
           ],
         },
         {
-          // 只有「广告 ∨」角标、没有 X 的弹窗：先点角标展开菜单
           key: 2,
           name: '广告角标-点开',
           actionCd: 1500,
@@ -184,7 +174,11 @@
             {
               key: 0,
               matches: '[text="广告"][width<200][left<300][visibleToUser=true]',
-              anyMatches: ['[text*="全部行程"]', '[text="去骑车"]', '[text*="骑行"]'],
+              anyMatches: [
+                '[text*="全部行程"]',
+                '[text="去骑车"]',
+                '[text*="骑行"]',
+              ],
             },
           ],
         },
@@ -202,9 +196,6 @@
           ],
         },
         {
-          // 诊断用：小程序底部固定有「广告由微信提供」这行纯文本，
-          // 点它没有任何副作用。它的触发记录能证明 GKD 到底有没有在微信窗口里跑规则。
-          // 排查完可以关掉这一组。
           key: 9,
           name: '诊断-微信窗口可达性',
           matchTime: 0,
@@ -220,9 +211,6 @@
         },
       ],
     },
-
-    // ⑥ 美团 App 内的小程序容器：只保留开屏「跳过」
-    //    营销弹窗（点外卖送次卡 / 首单外卖0元吃）被画在自绘层，无障碍树里没有节点，无法自动关闭
     {
       id: 'com.sankuai.meituan',
       name: '美团',
@@ -230,7 +218,7 @@
         {
           key: 0,
           name: '小程序开屏-跳过',
-          matchTime: 0,
+          matchTime: 20000,
           actionMaximum: 0,
           actionCd: 300,
           resetMatch: 'app',
@@ -238,6 +226,7 @@
             {
               key: 0,
               matches: '[text*="跳过"]',
+              action: 'clickCenter',
             },
           ],
         },
